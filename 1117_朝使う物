@@ -1,0 +1,82 @@
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+import time
+
+
+def open_multiple_tabs(driver, url_list, delay=2):
+    """
+    指定されたURLを複数タブで開く
+    """
+    for url in url_list:
+        driver.execute_script("window.open('');")  # 新しいタブを作成
+        driver.switch_to.window(driver.window_handles[-1])  # 新しいタブに切り替え
+        driver.get(url)  # URLを開く
+        print(f"Opened: {url}")
+        time.sleep(delay)
+
+
+def play_youtube_video(driver, url):
+    """
+    指定されたYouTube動画を再生する
+    """
+    driver.get(url)
+    print(f"Opened: {url}")
+
+    try:
+        # 再生ボタンをクリックするまで待機
+        play_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "button.ytp-large-play-button"))
+        )
+        play_button.click()
+        print("動画を再生しました。")
+    except Exception as e:
+        print(f"再生ボタンが見つからないか、クリックできませんでした: {e}")
+
+    try:
+        # 広告スキップボタンがあればクリック
+        skip_button = WebDriverWait(driver, 5).until(
+            EC.element_to_be_clickable((By.CLASS_NAME, "ytp-ad-skip-button"))
+        )
+        skip_button.click()
+        print("広告をスキップしました。")
+    except:
+        print("広告スキップボタンは見つかりませんでした。")
+
+
+# メイン処理
+if __name__ == "__main__":
+    options = webdriver.ChromeOptions()
+    options.add_argument('--start-maximized')
+    options.add_argument('--autoplay-policy=no-user-gesture-required')  # 自動再生を許可
+
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+
+    try:
+        # YouTube動画URL
+        youtube_url = "https://www.youtube.com/watch?v=PgbcSw-c1O0&t=1315s"
+        play_youtube_video(driver, youtube_url)
+
+        # 他のURL（QiitaやPython関連記事）
+        additional_urls = [
+            "https://qiita.com/",
+            "https://www.e-typing.ne.jp/english/words/business.asp",
+            "https://www.geeksforgeeks.org/python-programming-language/"
+        ]
+
+        # 新しいタブで追加URLを開く
+        open_multiple_tabs(driver, additional_urls)
+
+        # メッセージ
+        print("すべてのURLを開きました。ブラウザを閉じるには手動で操作してください。")
+
+    except Exception as e:
+        print(f"エラーが発生しました: {e}")
+    finally:
+        # スクリプトを停止しブラウザを維持
+        print("スクリプトの実行が完了しました。Ctrl + C で終了してください。")
+        while True:
+            time.sleep(1)
